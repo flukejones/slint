@@ -882,7 +882,8 @@ impl WinitWindowAdapter {
 
             let Some(winit_window) = self.winit_window() else {
                 // Can't really show it on the screen, safe it in the attributes and try again later.
-                self.winit_window_or_none.borrow().set_visible(true);
+                self.shared_backend_data
+                    .register_inactive_window((self.self_weak.upgrade().unwrap()) as _);
                 return Ok(());
             };
 
