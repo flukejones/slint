@@ -1049,6 +1049,11 @@ impl ItemRc {
             let item_ref = item_rc.borrow();
             if let Some(flickable) = vtable::VRef::downcast_pin::<crate::items::Flickable>(item_ref)
             {
+                if let Some(window_adapter) = self.window_adapter() {
+                    *crate::window::WindowInner::from_pub(window_adapter.window())
+                        .keyboard_reveal_flickable
+                        .borrow_mut() = item_rc.downgrade();
+                }
                 let geo = self.geometry();
 
                 flickable.reveal_points(

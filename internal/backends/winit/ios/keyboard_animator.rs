@@ -93,6 +93,8 @@ impl KeyboardCurveSampler {
     pub(crate) fn new(content_view: &UIView, sampler: impl Fn(NSRect) + 'static) -> Self {
         let mtm = MainThreadMarker::new().expect("Must be created on main thread");
         let view = UIView::new(mtm);
+        // Animation proxy parks over live content; must not take touches.
+        view.setUserInteractionEnabled(false);
         content_view.addSubview(&view);
 
         let target = DisplayLinkTarget::new(mtm, view.clone(), sampler);

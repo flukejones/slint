@@ -597,6 +597,8 @@ pub struct WindowInner {
     /// ItemRC that currently have the focus (possibly an instance of TextInput)
     pub focus_item: RefCell<crate::item_tree::ItemWeak>,
     focus_item_visibility_tracker: ChangeTracker,
+    /// Flickable last scrolled by the keyboard reveal; re-clamped on rect change.
+    pub(crate) keyboard_reveal_flickable: RefCell<crate::item_tree::ItemWeak>,
     /// The last text that was sent to the input method
     pub(crate) last_ime_text: RefCell<SharedString>,
     /// Don't let ComponentContainers's instantiation change the focus.
@@ -675,6 +677,7 @@ impl WindowInner {
             }),
             focus_item: Default::default(),
             focus_item_visibility_tracker: Default::default(),
+            keyboard_reveal_flickable: Default::default(),
             last_ime_text: Default::default(),
             cursor_blinker: Default::default(),
             active_popups: Default::default(),
@@ -2307,6 +2310,12 @@ impl WindowInner {
         window_item.virtual_keyboard_size.set(size);
         if let Some(focus_item) = self.focus_item.borrow().upgrade() {
             focus_item.try_scroll_into_visible();
+        }
+        if let Some(flickable_rc) = self.keyboard_reveal_flickable.borrow().upgrade() {
+            let item_ref = flickable_rc.borrow();
+            if let Some(flickable) = ItemRef::downcast_pin::<crate::items::Flickable>(item_ref) {
+                flickable.clamp_into_bounds(&flickable_rc);
+            }
         }
     }
 
