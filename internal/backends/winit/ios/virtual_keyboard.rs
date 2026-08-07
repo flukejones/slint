@@ -119,8 +119,18 @@ fn handle_keyboard_notification<'a>(
                 continue;
             };
             let view = unsafe { &*(window_handle.ui_view.as_ptr() as *const objc2_ui_kit::UIView) };
-            let frame_begin = view.convertRect_fromCoordinateSpace(frame_begin, &coordinate_space);
+            let view_height = view.bounds().size.height;
+            let mut frame_begin =
+                view.convertRect_fromCoordinateSpace(frame_begin, &coordinate_space);
             let frame_end = view.convertRect_fromCoordinateSpace(frame_end, &coordinate_space);
+
+            // iOS 26 posts a zero-size begin frame; it would sweep mid-screen.
+            if frame_begin.size.width <= 0.0 || frame_begin.size.height <= 0.0 {
+                frame_begin = NSRect {
+                    origin: objc2_foundation::NSPoint { x: frame_end.origin.x, y: view_height },
+                    size: frame_end.size,
+                };
+            }
 
             // Assumes that the keyboard animation doesn't pass over the window without
             // starting or ending while intersecting.

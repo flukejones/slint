@@ -335,6 +335,24 @@ impl Flickable {
         Self::FIELD_OFFSETS.content_y().apply_pin(self).set(euclid::Length::new(-new_cy));
     }
 
+    /// Clamp the viewport back into keyboard-adjusted bounds after a reveal.
+    pub(crate) fn clamp_into_bounds(self: Pin<&Self>, self_rc: &ItemRc) {
+        let geo = Self::geometry_without_virtual_keyboard(self_rc);
+        let zero = 0 as Coord;
+        let cw = Self::FIELD_OFFSETS.content_width().apply_pin(self).get().0;
+        let ch = Self::FIELD_OFFSETS.content_height().apply_pin(self).get().0;
+        let cx = -Self::FIELD_OFFSETS.content_x().apply_pin(self).get().0;
+        let cy = -Self::FIELD_OFFSETS.content_y().apply_pin(self).get().0;
+        let new_cx = cx.min((cw - geo.width()).max(zero)).max(zero);
+        let new_cy = cy.min((ch - geo.height()).max(zero)).max(zero);
+        if new_cx != cx {
+            Self::FIELD_OFFSETS.content_x().apply_pin(self).set(euclid::Length::new(-new_cx));
+        }
+        if new_cy != cy {
+            Self::FIELD_OFFSETS.content_y().apply_pin(self).set(euclid::Length::new(-new_cy));
+        }
+    }
+
     fn geometry_without_virtual_keyboard(self_rc: &ItemRc) -> LogicalRect {
         let mut geometry = self_rc.geometry();
 
